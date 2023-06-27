@@ -1,0 +1,143 @@
+可以使用Golang语言中的 `redis` 库连接 Redis 数据库，并使用 `INFO` 命令查询所有数据库编号和对应的大小信息，最后将结果转换为 JSON 格式输出。
+
+以下是实现这个功能的基本代码：
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "github.com/go-redis/redis/v8"
+)
+
+func main() {
+    // 连接 Redis 数据库
+    rdb := redis.NewClient(&redis.Options{
+        Addr:     "localhost:6379",
+        Password: "", // Redis 无密码设置时留空
+        DB:       0,  // 使用默认数据库，编号为0
+    })
+
+    // 执行 INFO 命令查询数据库信息
+    info, err := rdb.Info().Result()
+    if err != nil {
+        panic(err)
+    }
+
+    // 解析 INFO 命令输出的数据，获取各个数据库的信息
+    dbInfo, err := redis.ParseInfo(info)["db"]
+    if err != nil {
+        panic(err)
+    }
+
+    // 构建一个字典，保存所有数据库的信息
+    dbInfoMap := make(map[string]map[string]string)
+    for key, value := range dbInfo {
+        // key 形如 "db0"，需要去掉 "db" 前缀，转成整数
+        dbNum := key[2:]
+        dbInfoMap[dbNum] = make(map[string]string)
+        // 将value字符串解析到map结构中
+        err := redis.ParseIntoMap(value, dbInfoMap[dbNum])
+        if err != nil {
+            panic(err)
+        }
+    }
+
+    // 将字典转换为 JSON 格式输出
+    jsonText, err := json.Marshal(dbInfoMap)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(string(jsonText))
+}
+```
+
+在上述代码中，我们首先使用 `redis.NewClient` 函数创建一个 Redis 客户端，然后调用 `rdb.Info()` 方法执行 `INFO` 命令查询所有数据库的信息。接着，我们将获取到的数据库信息通过 `redis.ParseInfo` 函数解析为一个字典类型的数据结构，其中每个键值对代表一个数据库的信息。最后，我们将字典类型的数据结构转化为 JSON 格式输出。
+
+可以使用 Golang 的 `redis` 库连接 Redis 数据库，然后通过 `SCAN` 命令查询指定数据库的所有一级 key。
+
+以下是实现这个功能的基本代码：
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/go-redis/redis/v8"
+)
+
+func main() {
+	// 连接 Redis 数据库
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // Redis 无密码设置时留空
+		DB:       0,  // 使用默认数据库，编号为0
+	})
+
+	// 查询指定数据库的所有一级 key
+	var cursor uint64 = 0
+	var keys []string
+	for {
+		// SCAN 命令支持分批次获取结果，避免一次性获取过多数据导致资源消耗过大
+		var err error
+		keys, cursor, err = rdb.Scan(cursor, "*", 1000).Result()
+		if err != nil {
+			panic(err)
+		}
+		for _, key := range keys {
+			// 以 ":" 分隔符为界，取一级 key
+			subKeys := rdb.Keys(key + ":*").Val()
+			if len(subKeys) == 0 {
+				fmt.Println(key)
+			}
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+}
+```
+
+在上述代码中，我们首先使用 `redis.NewClient` 函数创建一个 Redis 客户端，然后调用 `rdb.Scan` 方法通过游标方式查询指定数据库的所有 key。接着，我们对每个查询到的 key 依次检查它是否含有子 key，如果没有，就输出它作为一级 key 的名称。
+
+需要注意的是，如果 Redis 数据库中的 key 比较多，一次性查询所有的 key 可能会导致系统崩溃。因此，我们在查询时要使用 `SCAN` 命令进行分批次查询，并且每批次只查询少量数据。同时，为了保证查询效率，最好在程序中添加错误处理和异常情况处理的代码。
+
+可以使用 Golang 的 `redis` 库连接 Redis 数据库，然后通过 `KEYS` 命令查询所有符合指定一级 key 的键名，并使用 `MGET` 命令查询对应的值。
+
+以下是实现这个功能的基本代码：
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/go-redis/redis/v8"
+)
+
+func main() {
+	// 连接 Redis 数据库
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // Redis 无密码设置时留空
+		DB:       0,  // 使用默认数据库，编号为0
+	})
+
+	// 查询指定一级 key 的所有子集
+	keys := rdb.Keys("firstLevelKey:*").Val()
+	values, err := rdb.MGet(keys...).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	// 输出查询结果
+	for i, key := range keys {
+		value := values[i]
+		fmt.Printf("%s: %v\n", key, value)
+	}
+}
+```
+
+在上述代码中，我们首先使用 `redis.NewClient` 函数创建一个 Redis 客户端，接着调用 `rdb.Keys` 方法查询所有符合指定一级 key 的键名，再使用 `rdb.MGet` 方法查询对应的值。最后，我们输出查询结果到控制台上。
+
+需要注意的是，如果 Redis 数据库中的数据量比较大，一次性查询所有符合条件的键名和对应的值可能会消耗很多系统资源，甚至导致程序崩溃。因此，最好在程序中添加错误处理和异常情况处理的代码，并且对数据量较大的情况，可以考虑使用 `SCAN` 命令进行分批次查询。
