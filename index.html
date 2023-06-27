@@ -170,7 +170,8 @@
       document.getElementById('repo').innerHTML = baseRepo + '/' + (paths.length ? paths[paths.length - 1] : '')
     }
 
-    getDir('', true)
+    // 初始化根目录
+    if (baseToken) getDir('', true)
 
     function getDir(path, isRoot, event, isBack) {
       if (!path && !isRoot) return
