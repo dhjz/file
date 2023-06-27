@@ -143,6 +143,7 @@
       hideLoading()
       return response;
     }, function (error) {
+      hideLoading()
       return Promise.reject(error);
     });
 
