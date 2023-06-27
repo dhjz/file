@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dhjz-img</title>
+
+  <style>
+    .img-wrap {
+      overflow: hidden;
+    }
+    .img-wrap a {
+      text-decoration: none;
+      border: 1px solid #eee;
+      border-radius: 4rpx;
+      float: left;
+      width: 80px;
+      padding: 0 10px;
+      line-height: 26px;
+      margin: 0 6px 6px 0;
+    }
+    .img-wrap a.img-a {
+      width: 150px;
+      text-align: center;
+      padding: 0;
+    }
+    .img-wrap a img {
+      display: block;
+      width: 150px;
+      height: 120px;
+      margin-bottom: 4px;
+    }
+    input  {
+      background: #fff;
+      outline: none;
+      line-height: 26px;
+      border: 1px solid #ccc;
+      padding: 0 10px;
+      display: inline-block;
+      min-width: 280px;
+      margin-top: 6px;
+    }
+    button {
+      outline: none;
+      background: none;
+      border: 1px solid #ccc;
+      display: inline-block;
+      margin-left: 10px;
+      line-height: 18px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    button span {
+      color: #f33;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <p style="margin: 0;">版本号: 202305191207</p>
+  <h4>根域名: <input type="text" value="" id="rootdm">
+    <div style="display: inline-block;" id="btn-wrap"></div>
+  </h4>
+  <h3>~400KB:</h3>
+  <div class="img-wrap" id="img-wrap">
+    <a href=""></a>
+  </div>
+  <h3>~50KB:</h3>
+  <div class="img-wrap" id="img-wrap-s">
+    <a href=""></a>
+  </div>
+  <h3>~20KB: <button onclick="showImg('ss')">显图</button></h3>
+  <div class="img-wrap" id="img-wrap-ss">
+    <a href=""></a>
+  </div>
+  <script>
+    let urls = [
+      { name: '本站', url: location.href },
+      { name: 'staticaly加速', url: 'https://cdn.staticaly.com/gh/dhjz/img/master/' },
+      { name: 'gitmirror加速', url: 'https://raw.gitmirror.com/dhjz/img/master/' },
+      { name: 'jsdelivr加速', url: 'https://gcore.jsdelivr.net/gh/dhjz/img@master/' },
+      { name: 'jsdelivr1加速', url: 'https://cdn.jsdelivr.net/gh/dhjz/img/' },
+      { name: 'kgithub加速', url: 'https://raw.kgithub.com/dhjz/img/master/' },
+      { name: 'fastgit加速', url: 'https://raw.fastgit.org/dhjz/img/master/' },
+    ]
+    
+    function initBtn() {
+      let btnEl = document.getElementById('btn-wrap')
+      for (let j = 0; j < urls.length; j++) {
+        const temp = urls[j]
+        const btn = document.createElement('button')
+        btn.innerHTML = temp.name + `<span id="btn${j}"></span>`
+        let ig = new Image()
+        ig.src = temp.url + 'ss/' + Math.ceil(Math.random() * 200) + '.jpg'
+        let start = new Date().getTime()
+        ig.onload = function() {
+          document.getElementById(`btn${j}`).innerHTML = new Date().getTime() - start + 'ms'
+        }
+        ig.onerror = function() {
+          document.getElementById(`btn${j}`).innerHTML = '延迟过高'
+        }
+        btn.onclick = function () {
+          document.getElementById('rootdm').value = temp.url
+          init()
+        }
+        btnEl.append(btn)
+      }
+    }
+    initBtn()
+
+    function set(type) {
+      let dm = ''
+      if (type == 1) dm = 'https://cdn.staticaly.com/gh/dhjz/img/master/'
+      if (type == 2) dm = 'https://raw.gitmirror.com/dhjz/img/master/'
+      if (type == 3) dm = 'https://gcore.jsdelivr.net/gh/dhjz/img@master/'
+      if (type == 4) dm = 'https://cdn.jsdelivr.net/gh/dhjz/img/'
+      if (type == 5) dm = 'https://raw.kgithub.com/dhjz/img/master/'
+      if (type == 6) dm = 'https://raw.fastgit.org/dhjz/img/master/'
+      document.getElementById('rootdm').value = dm
+      init()
+    }
+    
+    function init() {
+      let rootdm = document.getElementById('rootdm').value || ''
+      let wrap = document.getElementById('img-wrap')
+      let ihtml = ''
+      let wraps = document.getElementById('img-wrap-s')
+      let ihtmls = ''
+      let wrapss = document.getElementById('img-wrap-ss')
+      let ihtmlss = ''
+      for (let i = 1; i < 401; i++) {
+        ihtml += `<a target="_blank" href="${rootdm}${i}.jpg">${i}.jpg</a>`
+        ihtmls += `<a target="_blank" href="${rootdm}s/${i}.jpg">${i}.jpg</a>`
+        if (i < 201) ihtmlss += `<a target="_blank" href="${rootdm}ss/${i}.jpg">${i}.jpg</a>`
+      }
+      wrap.innerHTML = ihtml
+      wraps.innerHTML = ihtmls
+      wrapss.innerHTML = ihtmlss
+    }
+
+    init()
+
+    function showImg(type) {
+      let rootdm = document.getElementById('rootdm').value || ''
+      let wrap = document.getElementById('img-wrap')
+      let ihtml = ''
+      if (type == 'ss') {
+        wrap = document.getElementById('img-wrap-ss')
+      }
+      for (let i = 1; i < 201; i++) {
+        ihtml += `<a target="_blank" class="img-a" href="${rootdm}ss/${i}.jpg"><img src="${rootdm}ss/${i}.jpg" />${i}.jpg</a>`
+      }
+      wrap.innerHTML = ihtml
+    }
+  </script>
+</body>
+</html>
