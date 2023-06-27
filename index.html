@@ -2,87 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dhjz-img</title>
-
+  <title>Document</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.1.3/axios.min.js"></script>
+  <script src="https://unpkg.com/js-base64"></script>
+  <!-- <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.5/base64.min.js"></script> -->
   <style>
-    .img-wrap {
-      overflow: hidden;
+    * {margin: 0; padding:0;}
+    html {
+      padding:20px 0 0;
     }
-    .img-wrap a {
-      text-decoration: none;
-      border: 1px solid #eee;
-      border-radius: 4rpx;
-      float: left;
-      width: 80px;
-      padding: 0 10px;
-      line-height: 26px;
-      margin: 0 6px 6px 0;
+    body { font-size: 16px;max-width: 80%;  margin: 0 auto; }
+    h2 {margin-bottom: 10px;}
+    .back {display: inline-block;border: 1px solid #ddd; padding: 4px 8px;font-size: 15px; font-weight: normal;    cursor: pointer; margin-left: 20px;}
+    .ftr {float: right;}
+    .file_list li { line-height:40px;border-top: 1px solid #ddd;display: flex; align-items: center;padding: 6px 0;}
+    .w50 .file_list li { float: left;width: 49%;margin-right:1%;}
+    .file_list li img { margin-right: 6px;display: inline-block;vertical-align: middle;}
+    .file_list li a { color: #337ab7; text-decoration: none;flex: 1;width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+    .file_list li span {color: #666; font-size:14px;}
+    .file_list li span.sha {min-width: 350px; display:inline-block;}
+    .file_list li span.size {width: 80px; display:inline-block;}
+    .file_list li i {border: 1px solid #ddd; padding: 4px 8px;font-size: 14px; font-style: normal; cursor: pointer; margin-left: 10px; line-height: 20px;}
+    .file-img {width: 60px; max-height: 60px;}
+    li{ list-style-type:none; }
+    @media screen and (max-width:700px){
+     .file_list li span {display:none;}
     }
-    .img-wrap a.img-a {
-      width: 150px;
-      text-align: center;
-      padding: 0;
-    }
-    .img-wrap a img {
-      display: block;
-      width: 150px;
-      height: 120px;
-      margin-bottom: 4px;
-    }
-    input  {
-      background: #fff;
-      outline: none;
-      line-height: 26px;
-      border: 1px solid #ccc;
-      padding: 0 10px;
-      display: inline-block;
-      min-width: 280px;
-      margin-top: 6px;
-    }
-    button {
-      outline: none;
-      background: none;
-      border: 1px solid #ccc;
-      display: inline-block;
-      margin-left: 10px;
-      line-height: 18px;
-      padding: 4px 10px;
-      cursor: pointer;
-    }
-    button span {
-      color: #f33;
-      display: block;
+    input { background: #fff; outline: none; line-height: 26px; border: 1px solid #ccc; padding: 0 10px; display: inline-block; min-width: 280px; margin-top: 6px;}
+    button{ outline: none; background: none; border: 1px solid #ccc; display: inline-block; margin-left: 10px; line-height: 18px; padding: 4px 10px; cursor: pointer;}
+    button span{ color: #f33; display: block;}
+    #file{ display: none;}
+    h4 { overflow: hidden; margin-bottom: 20px;}
+    h2 { padding: 10px 0; margin-bottom: 20px; border-bottom: 1px solid #ccc; }
+    .tip {color: #999; font-size: 12px; margin-left: 20px;}
+    i {
+      font-style: normal;
     }
   </style>
 </head>
 <body>
-  <p style="margin: 0;">版本号: 202305191207</p>
+  <p style="margin: 0;">版本号: 20230627-1 <span class="tip">测试延迟请在根目录放<b>init.jpg</b></span></p>
   <h4>根域名: <input type="text" value="" id="rootdm">
     <div style="display: inline-block;" id="btn-wrap"></div>
   </h4>
-  <h3>~400KB:</h3>
-  <div class="img-wrap" id="img-wrap">
-    <a href=""></a>
+  <input type="file" id="file" class="filepond" name="filepond" />
+  <h2>当前目录：<i id="repo"></i>
+    <span onclick="location.reload()" class="back ftr">刷新</span>
+    <span onclick="toggleWrap()" class="back ftr">分列</span>
+    <span onclick="updateToken()" class="back ftr">设置Token</span>
+    <span onclick="updateRepo()" class="back ftr">设置Repo</span>
+    <span onclick="document.getElementById('file').click()" class="back">上传文件</span>
+    <!-- <span onclick="history.go(-1)" class="back">返回</span> -->
+  </h2>
+  <div id="file_wrap">
+    <ul class="file_list" id="file_list">
+      加载中...
+    </ul>
   </div>
-  <h3>~50KB:</h3>
-  <div class="img-wrap" id="img-wrap-s">
-    <a href=""></a>
-  </div>
-  <h3>~20KB: <button onclick="showImg('ss')">显图</button></h3>
-  <div class="img-wrap" id="img-wrap-ss">
-    <a href=""></a>
-  </div>
+
   <script>
+    function toggleWrap() {
+      var wrap = document.getElementById("file_wrap")
+      wrap.className = wrap.className ? '' : 'w50'
+    }
     let urls = [
       { name: '本站', url: location.href },
-      { name: 'staticaly加速', url: 'https://cdn.staticaly.com/gh/dhjz/img/master/' },
-      { name: 'gitmirror加速', url: 'https://raw.gitmirror.com/dhjz/img/master/' },
-      { name: 'jsdelivr加速', url: 'https://gcore.jsdelivr.net/gh/dhjz/img@master/' },
-      { name: 'jsdelivr1加速', url: 'https://cdn.jsdelivr.net/gh/dhjz/img/' },
-      { name: 'kgithub加速', url: 'https://raw.kgithub.com/dhjz/img/master/' },
-      { name: 'fastgit加速', url: 'https://raw.fastgit.org/dhjz/img/master/' },
+      { name: 'staticaly加速', url: 'https://cdn.staticaly.com/gh/dhjz/file/master/' },
+      { name: 'gitmirror加速', url: 'https://raw.gitmirror.com/dhjz/file/master/' },
+      { name: 'jsdelivr加速', url: 'https://gcore.jsdelivr.net/gh/dhjz/file@master/' },
+      { name: 'jsdelivr1加速', url: 'https://cdn.jsdelivr.net/gh/dhjz/file/' },
+      { name: 'kgithub加速', url: 'https://raw.kgithub.com/dhjz/file/master/' },
+      { name: 'fastgit加速', url: 'https://raw.fastgit.org/dhjz/file/master/' },
     ]
     
     function initBtn() {
@@ -92,7 +84,7 @@
         const btn = document.createElement('button')
         btn.innerHTML = temp.name + `<span id="btn${j}"></span>`
         let ig = new Image()
-        ig.src = temp.url + 'ss/' + Math.ceil(Math.random() * 200) + '.jpg'
+        ig.src = temp.url + 'init.jpg?t=' + new Date().getTime()
         let start = new Date().getTime()
         ig.onload = function() {
           document.getElementById(`btn${j}`).innerHTML = new Date().getTime() - start + 'ms'
@@ -102,57 +94,168 @@
         }
         btn.onclick = function () {
           document.getElementById('rootdm').value = temp.url
-          init()
+          initFileList()
         }
         btnEl.append(btn)
       }
     }
     initBtn()
 
-    function set(type) {
-      let dm = ''
-      if (type == 1) dm = 'https://cdn.staticaly.com/gh/dhjz/img/master/'
-      if (type == 2) dm = 'https://raw.gitmirror.com/dhjz/img/master/'
-      if (type == 3) dm = 'https://gcore.jsdelivr.net/gh/dhjz/img@master/'
-      if (type == 4) dm = 'https://cdn.jsdelivr.net/gh/dhjz/img/'
-      if (type == 5) dm = 'https://raw.kgithub.com/dhjz/img/master/'
-      if (type == 6) dm = 'https://raw.fastgit.org/dhjz/img/master/'
-      document.getElementById('rootdm').value = dm
-      init()
-    }
+  </script>
+
+  <script>
+    window.baseRepo = localStorage.getItem('GIT_REPO') || 'dhjz/web'
+    window.baseToken = localStorage.getItem('GIT_TOKEN') || ''
+    if (!baseToken) alert('请先设置仓库和token')
+    window.request = axios.create({
+      baseURL: 'https://api.github.com/',
+      timeout: 10000,
+      headers: {
+        'Authorization': 'Bearer ' + baseToken, 
+        'Accept': 'application/vnd.github+json', 
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    request.interceptors.response.use(function (response) {
+      console.log('请求成功', response);
+      return response;
+    }, function (error) {
+      return Promise.reject(error);
+    });
+
+    window.en = Base64.encode
+    window.de = Base64.decode
+
+    document.getElementById('repo').innerHTML = baseRepo
     
-    function init() {
+    window.fileList = []
+    function initFileList() {
       let rootdm = document.getElementById('rootdm').value || ''
-      let wrap = document.getElementById('img-wrap')
-      let ihtml = ''
-      let wraps = document.getElementById('img-wrap-s')
-      let ihtmls = ''
-      let wrapss = document.getElementById('img-wrap-ss')
-      let ihtmlss = ''
-      for (let i = 1; i < 401; i++) {
-        ihtml += `<a target="_blank" href="${rootdm}${i}.jpg">${i}.jpg</a>`
-        ihtmls += `<a target="_blank" href="${rootdm}s/${i}.jpg">${i}.jpg</a>`
-        if (i < 201) ihtmlss += `<a target="_blank" href="${rootdm}ss/${i}.jpg">${i}.jpg</a>`
-      }
-      wrap.innerHTML = ihtml
-      wraps.innerHTML = ihtmls
-      wrapss.innerHTML = ihtmlss
+      if (window.fileList.length) document.getElementById('file_list').innerHTML = window.fileList.map(item => {
+        return `<li>
+            <a target="_blank" href="${rootdm}${item.name}">${item.name}</a><span class='sha'>${item.sha}</span><span class="size">${(item.size / 1024).toFixed(2)}KB</span>
+            <i onclick="delOne('${item.path}')">删除</i>
+          </li>`
+      }).join('')
     }
 
-    init()
+    getContent('?t=' + new Date().getTime()).then(data => {
+      console.log(data);
+      window.fileList = (data || []).filter(d => d.type == 'file' && d.name != 'init.jpg')
+      initFileList()
+    })
 
-    function showImg(type) {
-      let rootdm = document.getElementById('rootdm').value || ''
-      let wrap = document.getElementById('img-wrap')
-      let ihtml = ''
-      if (type == 'ss') {
-        wrap = document.getElementById('img-wrap-ss')
+    function delOne(path) {
+      if (window.confirm("是否确认删除改文件: " + path)){
+        delFile(path, true)
       }
-      for (let i = 1; i < 201; i++) {
-        ihtml += `<a target="_blank" class="img-a" href="${rootdm}ss/${i}.jpg"><img src="${rootdm}ss/${i}.jpg" />${i}.jpg</a>`
-      }
-      wrap.innerHTML = ihtml
     }
+
+    // putContent('ip.txt', base64Str)
+    document.getElementById('file').addEventListener('input', (e) => {
+      const file = e.target.files[0]
+      if (file) putFile(file.name, file)
+      document.getElementById('file').value = ''
+    })
+
+    function updateRepo() {
+      const val = prompt('请输入仓库 {owner}/{repo}', localStorage.getItem('GIT_REPO') || 'dhjz/web')
+      if(val) localStorage.setItem('GIT_REPO', val) || location.reload()
+    }
+
+    function updateToken() {
+      const val = prompt('请输入token', localStorage.getItem('GIT_TOKEN') || '')
+      if(val) localStorage.setItem('GIT_TOKEN', val) || location.reload()
+    }
+
+    function getSha(path) {
+      return new Promise((reso, rej) => {
+        request.get(`/repos/${baseRepo}/contents/${path}`).then(res => reso(res.data.sha)).catch(() => reso(null))
+      })
+    }
+
+    function getContent(path, isFull) {
+      if (isFull) return request.get(`/repos/${baseRepo}/contents/${path}`)
+
+      return new Promise((reso, rej) => {
+        request.get(`/repos/${baseRepo}/contents/${path}`).then(res => {
+          if (Array.isArray(res.data)) return reso(res.data)
+          reso(Base64.decode(res.data.content))
+        }).catch(() => {
+          console.log('not exit file: ' + path)
+          reso(null)
+        })
+      })
+    }
+
+    function putContent(path, content) {
+      const data = {
+        message: now() + ' update ' + path,
+        content: Base64.encode(content),
+      }
+
+      getSha(path).then(sha => {
+        if (sha) data.sha = sha
+        request.put(`/repos/${baseRepo}/contents/${path}`, data)
+      })
+    }
+
+    function delFile(path, isTip) {
+      getSha(path).then((sha) => {
+        request.delete(`/repos/${baseRepo}/contents/${path}`, {
+          params: {
+            message: now() + ' del ' + path,
+            sha
+          }
+        }).then(() => {
+          if (isTip) alert('删除文件成功:' + path)
+        })
+      }).catch((e) => console.log('not exit file: ' + path))
+    }
+
+    function putFile(path, file) {
+      console.log('upload file:', file)
+      getSha(path).then(sha => {
+        if (sha && !window.confirm('已存在改文件, 是否覆盖?')) return
+        // if (sha && window.confirm('是否自动重命名?')) path = (new Date().getTime() + '').substr(0, 10) + '_' + path
+        const reader = new FileReader()
+        reader.readAsArrayBuffer(file)
+        reader.onload = async () => {
+          const arrayBuffer = reader.result;
+          const blob = new Blob([arrayBuffer], { type: file.type });
+          const content = await blob.arrayBuffer();
+          const data = {
+            message: now() + ' update ' + path,
+            path: path,
+            content: btoa(chunkChar(new Uint8Array(content))),
+            sha,
+          }
+          request.put(`/repos/${baseRepo}/contents/${path}`, data, {
+            headers: {
+              'Content-Type': file.type,
+            }
+          }).then(() => alert('上传成功:' + path + ', 大小:' + (file.size / 1024).toFixed(2) + 'KB'))
+        }
+      })
+    }
+
+    function chunkChar(arr) {
+      // content: btoa(String.fromCharCode(...new TextEncoder().encode(content))) 不太行
+      // String.fromCharCode()方法最多可以接受65535个参数
+      const chunkSize = 10000
+      const chunks = []
+      for (let i = 0; i < arr.length; i += chunkSize) {
+        chunks.push(arr.slice(i, i + chunkSize))
+      }
+      const strings = chunks.map(chunk => String.fromCharCode(...chunk))
+      return strings.join('')
+    }
+
+    function now() {
+      return new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0,19)
+    }
+
+
   </script>
 </body>
 </html>
