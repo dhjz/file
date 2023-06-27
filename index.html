@@ -147,6 +147,7 @@
     })
 
     function delOne(path) {
+      if (path == 'index.html') return alert('主页index.html不能被删除!')
       if (window.confirm("是否确认删除改文件: " + path)){
         delFile(path, true)
       }
