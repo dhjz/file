@@ -37,6 +37,7 @@
     .file_list li img { margin-right: 6px;display: inline-block;vertical-align: middle;}
     .file_list li a { color: #333; text-decoration: none;flex: 1;width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
     .file_list li.dir a { text-decoration: underline; color: #1769ff ; font-weight: bold; }
+    .file_list li.dir .del { visibility: hidden; pointer-events: none; }
     .file_list li span {color: #666; font-size:14px;}
     .file_list li span.sha {min-width: 350px; display:inline-block;}
     .file_list li span.size {width: 80px; display:inline-block;}
@@ -64,12 +65,13 @@
   </style>
 </head>
 <body>
-  <p style="margin: 0;">版本号: 20230627-1 <span class="tip">测试延迟请在根目录放<b>init.jpg</b></span></p>
+  <p style="margin: 0;">版本号: 20230627-1 <span class="tip">测试延迟请在根目录上传<b>init.jpg</b>(50kb以内)</span></p>
   <h4>根域名: <input type="text" value="" id="rootdm">
     <div style="display: inline-block;" id="btn-wrap"></div>
   </h4>
   <input type="file" id="file" class="filepond" name="filepond" />
   <h2>当前目录：<i id="repo"></i>
+    <span onclick="addDir()" class="back">新建目录</span>
     <span onclick="document.getElementById('file').click()" class="back">上传文件</span>
     <span onclick="dirBack()" class="back">←返回</span>
     <span onclick="refresh()" class="back ftr">刷新</span>
@@ -163,7 +165,7 @@
       if (window.fileList.length) document.getElementById('file_list').innerHTML = tempList.map(item => {
         return `<li class="file ${item.ftype}">
             <a target="_blank" href="${rootdm}${item.path}" onclick="getDir('${item.type == 'dir' ? item.path : ''}', false, event)">${item.name}</a><span class='sha'>${item.sha}</span><span class="size">${getUnit(item.size)}</span>
-            <i onclick="delOne('${item.path}')">删除</i>
+            <i onclick="delOne('${item.path}', '${item.sha}')" class="del">删除</i>
           </li>`
       }).join('')
 
@@ -184,9 +186,17 @@
           if (item.type == 'dir') item.ftype = 'dir'
           return item
         })
+        window.fileList.sort((a, b) => a.type < b.type ? -1 : 1)
         if (path && !isBack) paths.push(path)
         initFileList()
       })
+    }
+
+    function addDir() {
+      const val = prompt('请输入新建目录名称, 基于根目录, 不以/开头', '')
+      if (val) {
+        putDir(val)
+      }
     }
 
     function dirBack() {
@@ -213,10 +223,10 @@
       }
     }
 
-    function delOne(path) {
+    function delOne(path, sha) {
       if (path == 'index.html') return alert('主页index.html不能被删除!')
       if (window.confirm("是否确认删除改文件: " + path)){
-        delFile(path, true)
+        delFile(path, sha, true)
       }
     }
 
@@ -269,18 +279,33 @@
       })
     }
 
-    function delFile(path, isTip) {
-      getSha(path).then((sha) => {
-        request.delete(`/repos/${baseRepo}/contents/${path}`, {
-          params: {
-            message: now() + ' del ' + path,
-            sha
-          }
-        }).then(() => {
-          if (isTip) alert('删除文件成功:' + path)
+    function putDir(path) {
+      const data = {
+        message: now() + ' create dir ' + path,
+        content: '',
+      }
+
+      getContent(path).then(res => {
+        if (Array.isArray(res)) return alert('该目录已存在')
+        request.put(`/repos/${baseRepo}/contents/${path}${path.endsWith('/') ? '' : '/'}.init`, data).then(() => {
+          alert('新建目录成功: ' + path)
           refresh()
         })
-      }).catch((e) => console.log('not exit file: ' + path))
+      })
+    }
+
+    function delFile(path, sha, isTip) {
+      // getSha(path).then((sha) => {
+      // }).catch((e) => console.log('not exit file: ' + path))
+      request.delete(`/repos/${baseRepo}/contents/${path}`, {
+        params: {
+          message: now() + ' del ' + path,
+          sha
+        }
+      }).then(() => {
+        if (isTip) alert('删除文件成功:' + path)
+        refresh()
+      })
     }
 
     function putFile(path, file) {
