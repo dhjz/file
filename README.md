@@ -12,6 +12,6 @@ github 图床, 免费图床, 纯浏览器前端实现github图床, 支持国内�
 - 支持分列查看和文件名搜索过滤
 - 支持常见文件类型的类型查看和高亮显示
 # 参考文档
-- [github api 官方文档: https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28](https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28)
+- [github api 官方文档: https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28](https://docs.github.com/en/rest/repos/contents?_blank)
 # 页面截图
 ![页面截图](http://dhjz.github.io/file/dfile.jpg)
